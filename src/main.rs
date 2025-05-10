@@ -5,7 +5,7 @@ use jacks_sports_zone_api::{ start_scheduler, configure_app, shutdown_signal};
 use jacks_sports_zone_api::college_hockey_zone::database;
 use flexi_logger::{Age, Cleanup, Criterion, DeferredNow, FileSpec, Logger, Naming, WriteMode, Record};
 use serde_json::json;
-
+use jacks_card_games::card_games_app;
 /// Sets up a logger that writes to both standard output and a daily rotating log file.
 fn setup_logger(log_name: &str) -> Result<(), flexi_logger::FlexiLoggerError> {
     Logger::try_with_str("info")?
@@ -48,7 +48,6 @@ fn custom_format(
     write!(w, "{}", log_entry)?;
     Ok(())
 }
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     println!("Starting up...");
@@ -75,6 +74,7 @@ async fn main() -> std::io::Result<()> {
         move || {
             App::new() // clone again to move into the App
                 .service(configure_app(db_pool.clone()))
+                .service(card_games_app())
         }
     })
         .bind("0.0.0.0:8080")?
