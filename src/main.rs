@@ -28,26 +28,31 @@ fn custom_format(
     now: &mut DeferredNow,
     record: &Record,
 ) -> Result<(), std::io::Error> {
-    let level = if record.target() == "JacksSportsZoneApi" && record.level() == log::Level::Info {
-        "API"
-    } else if record.target() == "JacksSportsZoneApi" && record.level() == log::Level::Debug {
-        "Update"
-    } else if record.target() == "JacksSportsZoneApi" && record.level() == log::Level::Error {
-        "Update_Error"
-    } else {
-        record.level().as_str()
+    let component = match record.target() {
+        "JacksSportsZoneApi" => "sports_api",
+        "JacksCardGames" => "card_games",
+        "JacksUtils" => "utils",
+        "JacksServer" => "main_server",
+        _ => record.target(),
+    };
+
+    let level = match record.level() {
+        log::Level::Info if component == "sports_api" => "API",
+        log::Level::Debug if component == "sports_api" => "Update",
+        log::Level::Error if component == "sports_api" => "Update_Error",
+        _ => record.level().as_str(),
     };
 
     let log_entry = json!({
         "timestamp": now.format("%Y-%m-%dT%H:%M:%S%.6fZ").to_string(),
         "level": level,
-        "target": record.target(),
+        "component": component,
         "file": record.file().unwrap_or("<unnamed>"),
         "line": record.line().unwrap_or(0),
         "message": record.args().to_string(),
     });
 
-    write!(w, "{}", log_entry)?;
+    write!(w, "{}\n", log_entry)?;
     Ok(())
 }
 #[actix_web::main]
